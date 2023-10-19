@@ -9,7 +9,7 @@ let i = true; // first time socket connect`
 let IntervalID = {};
 
 function joinRoom(token, serviceToken) {
-  const socket = io("https://monitoring.tstpro.online/api/v1");
+  const socket = io("https://monitoring.tstpro.online");
 
   const stopMonitoring = () => {
     clearInterval(IntervalID?.id);
