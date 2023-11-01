@@ -12,6 +12,7 @@ let maxCPUUsageUser = 0;
 let maxCPUUsageSystem = 0;
 let maxMemoryUsage = 0;
 let maxSwapMemoryUsage = 0;
+let totalMemory = 0;
 
 const socket = io("https://monitoring.tstpro.online");
 
@@ -40,12 +41,18 @@ const RecordData = (usageData = {}) => {
       2
     );
   }
+
   if (maxSwapMemoryUsage < usageData?.Memory?.swapused) {
     maxSwapMemoryUsage = +(
       usageData?.Memory?.swapused /
       (1024 * 1024 * 1024)
     ).toFixed(2);
   }
+
+  totalMemory = +(
+    (usageData?.Memory?.total + usageData?.Memory?.swaptotal) /
+    (1024 * 1024 * 1024)
+  ).toFixed(2);
 };
 
 function init(token, serviceToken) {
@@ -86,12 +93,13 @@ function init(token, serviceToken) {
         maxCPUUsageSystem,
         maxMemoryUsage,
         maxSwapMemoryUsage,
+        totalMemory,
       });
       maxCPUUsageUser = 0;
       maxCPUUsageSystem = 0;
       maxMemoryUsage = 0;
       maxSwapMemoryUsage = 0;
-    }, 30 * 60 * 1000);
+    }, 1000);
 
     IntervalID = {
       id: intervalIndex,
