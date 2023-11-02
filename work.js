@@ -99,7 +99,7 @@ function init(token, serviceToken) {
       maxCPUUsageSystem = 0;
       maxMemoryUsage = 0;
       maxSwapMemoryUsage = 0;
-    }, 30 * 60 * 1000);
+    }, 10 * 60 * 1000);
 
     IntervalID = {
       id: intervalIndex,
