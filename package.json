@@ -1,7 +1,7 @@
 {
-  "name": "backend-monitoring",
-  "version": "2.0.0",
-  "main": "index.js",
+  "name": "wooffer",
+  "version": "1.0.0",
+  "main": "index.d.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -9,7 +9,7 @@
     "type": "git",
     "url": "git+https://github.com/hiren-kalariya/monitoring-packege.git"
   },
-  "author": "",
+  "author": "TST",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/hiren-kalariya/monitoring-packege/issues"
@@ -19,5 +19,6 @@
     "socket.io-client": "^4.7.2"
   },
   "devDependencies": {},
+  "types": "./index.d.ts",
   "description": ""
 }
