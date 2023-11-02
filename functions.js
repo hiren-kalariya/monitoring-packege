@@ -8,7 +8,7 @@ const getCPUInformation = async () => {
     const cpuData = await currentLoad();
     const latency = await inetLatency();
     return {
-      user: +(cpuData?.currentLoad).toFixed(2) || 0,
+      user: +(cpuData?.currentLoadUser).toFixed(2) || 0,
       System: +(cpuData?.currentLoadSystem).toFixed(2) || 0,
       Idle: +(cpuData?.currentLoadIdle).toFixed(2) || 0,
 
