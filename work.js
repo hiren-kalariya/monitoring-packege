@@ -29,30 +29,30 @@ const RecordData = (usageData = {}) => {
     !("swapused" in usageData?.Memory)
   )
     return;
-
-  if (maxCPUUsageUser < usageData?.CPU?.user) {
+  totalMemory = +(
+    (usageData?.Memory?.total + usageData?.Memory?.swaptotal) /
+    (1024 * 1024 * 1024)
+  ).toFixed(2);
+  if (
+    maxCPUUsageUser + maxCPUUsageSystem <
+    usageData?.CPU?.user + usageData?.CPU?.System
+  ) {
     maxCPUUsageUser = usageData?.CPU?.user;
-  }
-  if (maxCPUUsageSystem < usageData?.CPU?.System) {
     maxCPUUsageSystem = usageData?.CPU?.System;
   }
-  if (maxMemoryUsage < usageData?.Memory?.used) {
+
+  if (
+    maxMemoryUsage + maxSwapMemoryUsage <
+    usageData?.Memory?.used + usageData?.Memory?.swapused
+  ) {
     maxMemoryUsage = +(usageData?.Memory?.used / (1024 * 1024 * 1024)).toFixed(
       2
     );
-  }
-
-  if (maxSwapMemoryUsage < usageData?.Memory?.swapused) {
     maxSwapMemoryUsage = +(
       usageData?.Memory?.swapused /
       (1024 * 1024 * 1024)
     ).toFixed(2);
   }
-
-  totalMemory = +(
-    (usageData?.Memory?.total + usageData?.Memory?.swaptotal) /
-    (1024 * 1024 * 1024)
-  ).toFixed(2);
 };
 
 function init(token, serviceToken) {
@@ -99,7 +99,7 @@ function init(token, serviceToken) {
       maxCPUUsageSystem = 0;
       maxMemoryUsage = 0;
       maxSwapMemoryUsage = 0;
-    }, 1000);
+    }, 30 * 60 * 1000);
 
     IntervalID = {
       id: intervalIndex,
