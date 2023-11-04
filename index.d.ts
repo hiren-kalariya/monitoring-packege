@@ -1,10 +1,15 @@
-declare module 'backend-monitoring' {
-    function init(token: string, serviceToken: string): void;
+declare module "wooffer" {
+    // Function signature for the init function (default export)
+    const init: {
+      (): void;
+    };
+    export default init;
   
-    namespace init {
-      function alert(name?: string, message?: string): void;
-    }
+    // Named exports
+    export function alert(message: string): void;
+    export function success(message: string): void;
+    export function fail(message: string): void;
   
-    // Export the init function type.
-    export = init;
+    // Additional properties if needed
+    export const someProperty: string;
   }

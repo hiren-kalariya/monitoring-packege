@@ -14,7 +14,7 @@ let maxMemoryUsage = 0;
 let maxSwapMemoryUsage = 0;
 let totalMemory = 0;
 
-const socket = io("https://monitoring.tstpro.online");
+const socket = io("http://localhost:3001/");
 
 const RecordData = (usageData = {}) => {
   if (
@@ -153,10 +153,29 @@ function init(token, serviceToken) {
   });
 }
 
-module.exports = init;
-
-const alert = (name = " ", message = " ") => {
-  socket.emit("alert", "Name : " + name + "\nMessage : " + message);
+const alert = (message = " ") => {
+  socket.emit("alert", {
+    type: "alert",
+    message,
+  });
+};
+const success = (message = " ") => {
+  socket.emit("alert", {
+    type: "success",
+    message,
+  });
 };
 
-module.exports.alert = alert;
+const fail = (message = " ") => {
+  socket.emit("alert", {
+    type: "fail",
+    message,
+  });
+};
+
+module.exports = {
+  init,
+  alert,
+  success,
+  fail,
+};
