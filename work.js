@@ -14,7 +14,7 @@ let maxMemoryUsage = 0;
 let maxSwapMemoryUsage = 0;
 let totalMemory = 0;
 
-const socket = io("http://localhost:3001/");
+const socket = io("https://monitoring.tstpro.online");
 
 const RecordData = (usageData = {}) => {
   if (
