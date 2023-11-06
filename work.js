@@ -32,7 +32,7 @@ const RecordData = (usageData = {}) => {
     !("Memory" in usageData) ||
     !("used" in usageData?.Memory) ||
     !("swapused" in usageData?.Memory) ||
-    !("Process" in usageData?.Memory)
+    !("Process" in usageData)
   )
     return;
 
@@ -41,7 +41,7 @@ const RecordData = (usageData = {}) => {
     (1024 * 1024 * 1024)
   ).toFixed(2);
 
-  const NODE_CPU_LOADD = runningProcess.reduce(
+  const NODE_CPU_LOADD = usageData?.Process?.[process.pid]?.reduce(
     (total, currant) => {
       return [total[0] + currant?.cpu, total[1] + currant?.mem];
     },
@@ -77,7 +77,7 @@ const RecordData = (usageData = {}) => {
     ).toFixed(2);
   }
 };
-console.log(isSendData, "isSendData");
+
 function init(token, serviceToken) {
   const stopMonitoring = () => {
     clearInterval(IntervalID?.id);
