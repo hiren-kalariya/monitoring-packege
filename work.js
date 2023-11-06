@@ -142,6 +142,7 @@ function init(token, serviceToken) {
     };
   };
   process.on("uncaughtException", (err) => {
+    console.log(err);
     socket.emit(
       "error",
       "Name : " +
