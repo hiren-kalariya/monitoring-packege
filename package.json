@@ -1,6 +1,7 @@
 {
   "name": "wooffer",
-  "version": "1.0.9",
+  "version": "1.0.10",
+  "description": "Wooffer - Monitoring System",
   "main": "index.d.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -20,5 +21,5 @@
   },
   "devDependencies": {},
   "types": "./index.d.ts",
-  "description": ""
+
 }

@@ -8,6 +8,7 @@
 
 - [Installation](#Installation)
 - [How to use Form](#How-to-use-Form)
+- [Create custom log](#Create-custom-log)
 
 ## Installation
 
@@ -42,3 +43,29 @@ serviceToken = "<Your Service Token>";
 <p>
   Note: If you don't have token and serviceToken then go on <a href="https://app.wooffer.io"> https://app.wooffer.io</a> and generate  
 </p>
+
+## Create custom log
+
+To create Create Custom Alert Message
+
+```javascript
+const wooffer = require("wooffer");
+
+wooffer.alert("EventName: Login \nUsername:Jhon Due");
+```
+
+To create Create Custom Success Message
+
+```javascript
+const wooffer = require("wooffer");
+
+wooffer.success("EventName: Login \nUsername:Jhon Due");
+```
+
+To create Create Custom Fail Message
+
+```javascript
+const wooffer = require("wooffer");
+
+wooffer.fail("EventName: Login \nUsername:Jhon Due");
+```
