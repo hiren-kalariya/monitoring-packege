@@ -92,7 +92,7 @@ function init(token, serviceToken) {
       const memoryUsage = await getMemoryInformation();
       const data = await processes();
       const runningProcess = data.list.filter(
-        (el) => el.name == "node" && el.parentPid == process.ppid
+        (el) => el.parentPid == process.ppid
       );
 
       usageData["CPU"] = {
