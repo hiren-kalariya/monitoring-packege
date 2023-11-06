@@ -1,44 +1,67 @@
 const { io } = require("socket.io-client");
 const os = require("os");
+const cluster = require("cluster");
 const {
   getCPUInformation,
   getMemoryInformation,
   getFrequency,
 } = require("./functions");
+const { processes } = require("./proccess");
 let i = true; // first time socket connect`
 let isSendData = false; // first time socket connect`
 let IntervalID = {};
+
 let maxCPUUsageUser = 0;
 let maxCPUUsageSystem = 0;
 let maxMemoryUsage = 0;
 let maxSwapMemoryUsage = 0;
 let totalMemory = 0;
 
-const socket = io("https://monitoring.tstpro.online");
+let maxProcessCPUUsage = 0;
+let maxProcessMemoryUsage = 0;
+
+let disConnectTime = new Date().toUTCString();
+
+const socket = io("http://localhost:3001");
 
 const RecordData = (usageData = {}) => {
   if (
     !("CPU" in usageData) ||
     !("user" in usageData?.CPU) ||
-    !("System" in usageData?.CPU)
-  )
-    return;
-  if (
+    !("System" in usageData?.CPU) ||
     !("Memory" in usageData) ||
     !("used" in usageData?.Memory) ||
-    !("swapused" in usageData?.Memory)
+    !("swapused" in usageData?.Memory) ||
+    !("Process" in usageData?.Memory)
   )
     return;
+
   totalMemory = +(
     (usageData?.Memory?.total + usageData?.Memory?.swaptotal) /
     (1024 * 1024 * 1024)
   ).toFixed(2);
+
+  const NODE_CPU_LOADD = runningProcess.reduce(
+    (total, currant) => {
+      return [total[0] + currant?.cpu, total[1] + currant?.mem];
+    },
+    [0, 0]
+  );
+
   if (
     maxCPUUsageUser + maxCPUUsageSystem <
     usageData?.CPU?.user + usageData?.CPU?.System
   ) {
     maxCPUUsageUser = usageData?.CPU?.user;
     maxCPUUsageSystem = usageData?.CPU?.System;
+  }
+
+  if (maxProcessCPUUsage < NODE_CPU_LOADD[0]) {
+    maxProcessCPUUsage = NODE_CPU_LOADD[0];
+  }
+
+  if (maxProcessMemoryUsage < NODE_CPU_LOADD[1]) {
+    maxProcessMemoryUsage = NODE_CPU_LOADD[1];
   }
 
   if (
@@ -54,7 +77,7 @@ const RecordData = (usageData = {}) => {
     ).toFixed(2);
   }
 };
-
+console.log(isSendData, "isSendData");
 function init(token, serviceToken) {
   const stopMonitoring = () => {
     clearInterval(IntervalID?.id);
@@ -67,6 +90,11 @@ function init(token, serviceToken) {
 
       const CPU_DATA = await getCPUInformation();
       const memoryUsage = await getMemoryInformation();
+      const data = await processes();
+      const runningProcess = data.list.filter(
+        (el) => el.name == "node" && el.parentPid == process.ppid
+      );
+
       usageData["CPU"] = {
         ...CPU_DATA,
         ...getFrequency(),
@@ -74,12 +102,14 @@ function init(token, serviceToken) {
         core: os.cpus()?.length,
       };
       usageData["Memory"] = { ...memoryUsage };
-
+      usageData["Process"] = { [process.pid]: runningProcess };
       RecordData(usageData);
       if (isSendData) {
         socket.emit("usageData", {
           token,
           serviceToken,
+          pid: process.pid,
+          ppid: process.ppid,
           usageData,
         });
       }
@@ -94,11 +124,16 @@ function init(token, serviceToken) {
         maxMemoryUsage,
         maxSwapMemoryUsage,
         totalMemory,
+        maxProcessCPUUsage,
+        maxProcessMemoryUsage,
       });
       maxCPUUsageUser = 0;
       maxCPUUsageSystem = 0;
       maxMemoryUsage = 0;
       maxSwapMemoryUsage = 0;
+      maxProcessCPUUsage = 0;
+      maxProcessMemoryUsage = 0;
+      totalMemory = 0;
     }, 10 * 60 * 1000);
 
     IntervalID = {
@@ -125,17 +160,31 @@ function init(token, serviceToken) {
       socket.emit("join-room", {
         token,
         serviceToken,
+        pid: process.pid,
+        ppid: process.ppid,
+        cluster: {
+          isWorker: cluster.isWorker,
+          isMaster: cluster.isMaster,
+        },
       });
     } else {
       socket.emit("re-join-room", {
         token,
         serviceToken,
+        pid: process.pid,
+        ppid: process.ppid,
+        disConnectTime,
+        cluster: {
+          isWorker: cluster.isWorker,
+          isMaster: cluster.isMaster,
+        },
       });
     }
   };
 
   socket.on("connect", joinRoomEvent); // Join the room when connected initially
   socket.on("disconnect", () => {
+    disConnectTime = new Date().toUTCString();
     stopMonitoring();
   }); // Join the room when connected initially
 
@@ -173,9 +222,33 @@ const fail = (message = " ") => {
   });
 };
 
+const requestMonitoring = (req, res, next) => {
+  const requestReceivedTime = new Date().toUTCString();
+  socket.emit("requestStart", {
+    method: req.method,
+    originalUrl: req.originalUrl,
+    requestReceivedTime,
+  });
+
+  // Continue to the next middleware or route handler
+  res.on("finish", () => {
+    const responseSentTime = new Date().toUTCString();
+    const timeElapsed = responseSentTime - requestReceivedTime;
+    socket.emit("responseSent", {
+      method: req.method,
+      originalUrl: req.originalUrl,
+      requestReceivedTime,
+      timeElapsed,
+    });
+  });
+
+  next();
+};
+
 module.exports = {
   init,
   alert,
   success,
   fail,
+  requestMonitoring,
 };
