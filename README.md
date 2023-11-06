@@ -9,6 +9,7 @@
 - [Installation](#Installation)
 - [How to use Form](#How-to-use-Form)
 - [Create custom log](#Create-custom-log)
+- [Monitor Real-time request analytics](#Monitor-Real-time-request-analytics)
 
 ## Installation
 
