@@ -44,6 +44,15 @@ serviceToken = "<Your Service Token>";
   Note: If you don't have token and serviceToken then go on <a href="https://app.wooffer.io"> https://app.wooffer.io</a> and generate  
 </p>
 
+## Monitor Real-time request analytics
+
+To monitor real-time request usage, add the code into the root files such as app.js or index.js. Just below, create the 'app' variable and make the necessary modifications.
+
+```javascript
+app.use(wooffer.requestMonitoring);
+```
+
+
 ## Create custom log
 
 To create Create Custom Alert Message
@@ -69,3 +78,6 @@ const wooffer = require("wooffer");
 
 wooffer.fail("EventName: Login \nUsername:Jhon Due");
 ```
+
+
+
