@@ -1,8 +1,8 @@
 {
   "name": "wooffer",
-  "version": "1.0.10",
+  "version": "1.1.0",
   "description": "Wooffer - Monitoring System",
-  "main": "index.d.js",
+
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -20,6 +20,6 @@
     "socket.io-client": "^4.7.2"
   },
   "devDependencies": {},
-  "types": "./index.d.ts",
+  "types": "./index.d.ts"
 
 }
