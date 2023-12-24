@@ -22,7 +22,7 @@ let maxProcessMemoryUsage = 0;
 
 let disConnectTime = new Date().toUTCString();
 
-const socket = io("https://dev-monitoring.tstpro.online");
+const socket = io("https://staging-socket.wooffer.io");
 
 const RecordData = (usageData = {}) => {
   if (
