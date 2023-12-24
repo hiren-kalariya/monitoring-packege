@@ -43,7 +43,10 @@ const RecordData = (usageData = {}) => {
 
   const NODE_CPU_LOADD = usageData?.Process?.[process.pid]?.reduce(
     (total, currant) => {
-      return [total[0] + currant?.cpu, total[1] + currant?.mem];
+      return [
+        total[0] < currant?.cpu ? currant?.cpu : total[0],
+        total[1] < currant?.mem ? currant?.mem : total[1],
+      ];
     },
     [0, 0]
   );
