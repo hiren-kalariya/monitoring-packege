@@ -22,7 +22,7 @@ let maxProcessMemoryUsage = 0;
 
 let disConnectTime = new Date().toUTCString();
 
-const socket = io("https://monitoring.tstpro.online");
+const socket = io("https://dev-monitoring.tstpro.online");
 
 const RecordData = (usageData = {}) => {
   if (
@@ -54,6 +54,19 @@ const RecordData = (usageData = {}) => {
   ) {
     maxCPUUsageUser = usageData?.CPU?.user;
     maxCPUUsageSystem = usageData?.CPU?.System;
+  }
+
+  if (NODE_CPU_LOADD[0] > 100) {
+    socket.emit(
+      "error",
+      "process : " +
+        JSON.stringify(usageData?.Process) +
+        "\nprocessID : " +
+        process.pid +
+        "\nNODE_CPU_LOADD : " +
+        NODE_CPU_LOADD[0],
+      "\nNODE_MEMORU_LOADD : " + NODE_CPU_LOADD[1]
+    );
   }
 
   if (maxProcessCPUUsage < NODE_CPU_LOADD[0]) {
@@ -224,22 +237,28 @@ const fail = (message = " ") => {
 };
 
 const requestMonitoring = (req, res, next) => {
-  const requestReceivedTime = new Date().toUTCString();
+  const requestReceivedTime = new Date();
   socket.emit("requestStart", {
     method: req.method,
     originalUrl: req.originalUrl,
-    requestReceivedTime,
+    requestReceivedTime: requestReceivedTime.toUTCString(),
   });
 
   // Continue to the next middleware or route handler
   res.on("finish", () => {
-    const responseSentTime = new Date().toUTCString();
-    const timeElapsed = responseSentTime - requestReceivedTime;
+    console.log("Stop", requestReceivedTime.toUTCString());
+    const responseSentTime = new Date();
+    const timeDifference = responseSentTime - requestReceivedTime;
+
+    // Check the response status
+    const responseStatus = res.statusCode;
+
     socket.emit("responseSent", {
       method: req.method,
       originalUrl: req.originalUrl,
-      requestReceivedTime,
-      timeElapsed,
+      requestReceivedTime: requestReceivedTime.toUTCString(),
+      timeDifference,
+      responseStatus,
     });
   });
 
