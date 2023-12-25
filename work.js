@@ -60,19 +60,6 @@ const RecordData = (usageData = {}) => {
     maxCPUUsageSystem = usageData?.CPU?.System;
   }
 
-  if (averageProcessCpu > 100) {
-    socket.emit(
-      "error",
-      "process : " +
-        JSON.stringify(usageData?.Process) +
-        "\nprocessID : " +
-        process.pid +
-        "\nNODE_CPU_LOADD : " +
-        averageProcessCpu,
-      "\nNODE_MEMORU_LOADD : " + averageProcessMem
-    );
-  }
-
   if (maxProcessCPUUsage < averageProcessCpu) {
     maxProcessCPUUsage = averageProcessCpu;
   }
@@ -250,7 +237,6 @@ const requestMonitoring = (req, res, next) => {
 
   // Continue to the next middleware or route handler
   res.on("finish", () => {
-    console.log("Stop", requestReceivedTime.toUTCString());
     const responseSentTime = new Date();
     const timeDifference = responseSentTime - requestReceivedTime;
 
