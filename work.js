@@ -41,15 +41,16 @@ const RecordData = (usageData = {}) => {
     (1024 * 1024 * 1024)
   ).toFixed(2);
 
-  const NODE_CPU_LOADD = usageData?.Process?.[process.pid]?.reduce(
+  const NODE_CPU_LOAD = usageData?.Process?.[process.pid]?.reduce(
     (total, currant) => {
-      return [
-        total[0] < currant?.cpu ? currant?.cpu : total[0],
-        total[1] < currant?.mem ? currant?.mem : total[1],
-      ];
+      return [total[0] + (currant?.cpu || 0), total[1] + (currant?.mem || 0)];
     },
     [0, 0]
   );
+
+  const numberOfEntries = usageData?.Process?.[process.pid]?.length || 1;
+  const averageProcessCpu = NODE_CPU_LOAD[0] / numberOfEntries;
+  const averageProcessMem = NODE_CPU_LOAD[1] / numberOfEntries;
 
   if (
     maxCPUUsageUser + maxCPUUsageSystem <
@@ -59,7 +60,7 @@ const RecordData = (usageData = {}) => {
     maxCPUUsageSystem = usageData?.CPU?.System;
   }
 
-  if (NODE_CPU_LOADD[0] > 100) {
+  if (averageProcessCpu > 100) {
     socket.emit(
       "error",
       "process : " +
@@ -67,17 +68,17 @@ const RecordData = (usageData = {}) => {
         "\nprocessID : " +
         process.pid +
         "\nNODE_CPU_LOADD : " +
-        NODE_CPU_LOADD[0],
-      "\nNODE_MEMORU_LOADD : " + NODE_CPU_LOADD[1]
+        averageProcessCpu,
+      "\nNODE_MEMORU_LOADD : " + averageProcessMem
     );
   }
 
-  if (maxProcessCPUUsage < NODE_CPU_LOADD[0]) {
-    maxProcessCPUUsage = NODE_CPU_LOADD[0];
+  if (maxProcessCPUUsage < averageProcessCpu) {
+    maxProcessCPUUsage = averageProcessCpu;
   }
 
-  if (maxProcessMemoryUsage < NODE_CPU_LOADD[1]) {
-    maxProcessMemoryUsage = NODE_CPU_LOADD[1];
+  if (maxProcessMemoryUsage < averageProcessMem) {
+    maxProcessMemoryUsage = averageProcessMem;
   }
 
   if (
