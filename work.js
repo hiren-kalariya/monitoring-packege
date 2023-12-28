@@ -43,14 +43,17 @@ const RecordData = (usageData = {}) => {
 
   const NODE_CPU_LOAD = usageData?.Process?.[process.pid]?.reduce(
     (total, currant) => {
-      return [total[0] + (currant?.cpu || 0), total[1] + (currant?.mem || 0)];
+      return [
+        total[0] + (currant?.cpu || 0),
+        total[1] < currant?.mem ? currant?.mem : total[1],
+      ];
     },
     [0, 0]
   );
 
   const numberOfEntries = usageData?.Process?.[process.pid]?.length || 1;
   const averageProcessCpu = NODE_CPU_LOAD[0] / numberOfEntries;
-  const averageProcessMem = NODE_CPU_LOAD[1] / numberOfEntries;
+  const averageProcessMem = NODE_CPU_LOAD[1];
 
   if (
     maxCPUUsageUser + maxCPUUsageSystem <
