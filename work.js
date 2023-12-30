@@ -45,7 +45,7 @@ const RecordData = (usageData = {}) => {
     (total, currant) => {
       return [
         total[0] + (currant?.cpu || 0),
-        total[1] < currant?.mem ? currant?.mem : total[1],
+        total[1] < currant?.memRss ? currant?.memRss : total[1],
       ];
     },
     [0, 0]
