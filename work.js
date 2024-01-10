@@ -1,6 +1,7 @@
 const { io } = require("socket.io-client");
 const os = require("os");
 const cluster = require("cluster");
+const { performance } = require("perf_hooks");
 const {
   getCPUInformation,
   getMemoryInformation,
@@ -22,7 +23,7 @@ let maxProcessMemoryUsage = 0;
 
 let disConnectTime = new Date().toUTCString();
 
-const socket = io("https://realtime-apis.wooffer.io");
+const socket = io("https://staging-socket.wooffer.io");
 
 const RecordData = (usageData = {}) => {
   if (
@@ -94,7 +95,7 @@ function init(token, serviceToken) {
   const startMonitoring = () => {
     const intervalIndex = setInterval(async () => {
       let usageData = {};
-
+      const startTime = performance.now();
       const CPU_DATA = await getCPUInformation();
       const memoryUsage = await getMemoryInformation();
       const data = await processes();
@@ -111,6 +112,10 @@ function init(token, serviceToken) {
       usageData["Memory"] = { ...memoryUsage };
       usageData["Process"] = { [process.pid]: runningProcess };
       RecordData(usageData);
+      const endTime = performance.now();
+      const timeDifference = endTime - startTime;
+
+      console.log(`Time taken: ${timeDifference} milliseconds`);
       if (isSendData) {
         socket.emit("usageData", {
           token,
@@ -120,7 +125,7 @@ function init(token, serviceToken) {
           usageData,
         });
       }
-    }, 1000);
+    }, 5000);
 
     const usageIntervalIndex = setInterval(async () => {
       socket.emit("updateUsage", {
