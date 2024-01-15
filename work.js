@@ -1,6 +1,7 @@
 const { io } = require("socket.io-client");
 const os = require("os");
 const cluster = require("cluster");
+const axios = require("axios");
 const { performance } = require("perf_hooks");
 const {
   getCPUInformation,
@@ -115,7 +116,6 @@ function init(token, serviceToken) {
       const endTime = performance.now();
       const timeDifference = endTime - startTime;
 
-      console.log(`Time taken: ${timeDifference} milliseconds`);
       if (isSendData) {
         socket.emit("usageData", {
           token,
@@ -125,7 +125,7 @@ function init(token, serviceToken) {
           usageData,
         });
       }
-    }, 5000);
+    }, 2000);
 
     const usageIntervalIndex = setInterval(async () => {
       socket.emit("updateUsage", {
@@ -263,10 +263,70 @@ const requestMonitoring = (req, res, next) => {
   next();
 };
 
+// Add a request interceptor
+axios.interceptors.request.use(
+  (config) => {
+    const startTime = new Date();
+    config.metadata = { startTime: new Date() };
+    socket.emit("requestStart", {
+      method: config.method,
+      originalUrl: config.url,
+      requestReceivedTime: startTime.toUTCString(),
+    });
+    return config;
+  },
+  (error) => {
+    const endTime = new Date();
+    const timeDifference = endTime - error.config.metadata.startTime;
+    socket.emit("responseSent", {
+      method: error.config.method,
+      originalUrl: error.config.url,
+      requestReceivedTime: error.config.metadata.startTime,
+      timeDifference,
+      responseStatus: error.response ? error.response.status : "No response",
+      errorMessage: error.message,
+    });
+
+    return Promise.reject(error);
+  }
+);
+
+// Add a response interceptor
+axios.interceptors.response.use(
+  (response) => {
+    const endTime = new Date();
+    const timeDifference = endTime - response.config.metadata.startTime;
+
+    socket.emit("responseSent", {
+      method: response.config.method,
+      originalUrl: response.config.url,
+      requestReceivedTime: response.config.metadata.startTime,
+      timeDifference,
+      responseStatus: response.status,
+    });
+
+    return response;
+  },
+  (error) => {
+    const endTime = new Date();
+    const timeDifference = endTime - error.config.metadata.startTime;
+    socket.emit("responseSent", {
+      method: error.config.method,
+      originalUrl: error.config.url,
+      requestReceivedTime: error.config.metadata.startTime,
+      timeDifference,
+      responseStatus: error.response ? error.response.status : "No response",
+      errorMessage: error.message,
+    });
+    return Promise.reject(error);
+  }
+);
+
 module.exports = {
   init,
   alert,
   success,
   fail,
   requestMonitoring,
+  axios,
 };

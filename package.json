@@ -1,8 +1,7 @@
 {
   "name": "beta-wooffer",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Wooffer - Monitoring System",
-
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,9 +16,8 @@
   },
   "homepage": "https://github.com/hiren-kalariya/monitoring-packege#readme",
   "dependencies": {
+    "axios": "^1.6.5",
     "socket.io-client": "^4.7.2"
   },
-  "devDependencies": {},
   "types": "./index.d.ts"
-
 }
