@@ -125,7 +125,7 @@ function init(token, serviceToken) {
           usageData,
         });
       }
-    }, 2000);
+    }, 2500);
 
     const usageIntervalIndex = setInterval(async () => {
       socket.emit("updateUsage", {
@@ -270,6 +270,7 @@ axios.interceptors.request.use(
     config.metadata = { startTime: new Date() };
     socket.emit("requestStart", {
       method: config.method,
+      type: "ThirdParty",
       originalUrl: config.url,
       requestReceivedTime: startTime.toUTCString(),
     });
@@ -285,6 +286,7 @@ axios.interceptors.request.use(
       timeDifference,
       responseStatus: error.response ? error.response.status : "No response",
       errorMessage: error.message,
+      type: "ThirdParty",
     });
 
     return Promise.reject(error);
@@ -302,6 +304,7 @@ axios.interceptors.response.use(
       originalUrl: response.config.url,
       requestReceivedTime: response.config.metadata.startTime,
       timeDifference,
+      type: "ThirdParty",
       responseStatus: response.status,
     });
 
@@ -315,6 +318,7 @@ axios.interceptors.response.use(
       originalUrl: error.config.url,
       requestReceivedTime: error.config.metadata.startTime,
       timeDifference,
+      type: "ThirdParty",
       responseStatus: error.response ? error.response.status : "No response",
       errorMessage: error.message,
     });
