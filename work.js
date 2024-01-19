@@ -24,7 +24,7 @@ let maxProcessMemoryUsage = 0;
 
 let disConnectTime = new Date().toUTCString();
 
-const socket = io("https://staging-socket.wooffer.io");
+const socket = io("https://realtime-apis.wooffer.io");
 
 const RecordData = (usageData = {}) => {
   if (
