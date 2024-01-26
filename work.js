@@ -119,8 +119,7 @@ function init(token, serviceToken) {
         usageData.Process?.[process.pid]?.[0]?.cpuu ||
         usageData.Process?.[process.pid]?.[0]?.cpus
       )
-        console.log(usageData.Process);
-      RecordData(usageData);
+        RecordData(usageData);
 
       if (isSendData) {
         socket.emit("usageData", {

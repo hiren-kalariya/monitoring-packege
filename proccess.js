@@ -8,7 +8,7 @@ const exec = require("child_process").exec;
 const util = require("./util");
 
 let _platform = process.platform;
-console.log(_platform);
+// console.log(_platform);
 
 const _linux = _platform === "linux" || _platform === "android";
 const _darwin = _platform === "darwin";
