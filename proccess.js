@@ -9,6 +9,7 @@ const execSync = require("child_process").execSync;
 const util = require("./util");
 
 let _platform = process.platform;
+console.log(_platform);
 
 const _linux = _platform === "linux" || _platform === "android";
 const _darwin = _platform === "darwin";
@@ -625,7 +626,7 @@ function calcProcStatWin(procStat, all, _cpu_old) {
 // --------------------------
 // running processes
 
-function processes(callback) {
+function processes(processID, callback) {
   let parsedhead = [];
 
   function getName(command) {
@@ -822,15 +823,16 @@ function processes(callback) {
     if (lines.length > 1) {
       let head = lines[0];
       parsedhead = util.parseHead(head, 8);
-      lines.shift();
       lines.forEach(function (line) {
         if (line.trim() !== "") {
           result.push(parseLine(line));
         }
       });
     }
+
     return result;
   }
+
   function parseProcesses2(lines) {
     function formatDateTime(time) {
       const month = ("0" + (time.getMonth() + 1).toString()).slice(-2);
@@ -945,36 +947,24 @@ function processes(callback) {
       ) {
         if (_linux || _freebsd || _openbsd || _netbsd || _darwin || _sunos) {
           if (_linux) {
-            cmd =
-              "export LC_ALL=C; ps -axo pid:11,ppid:11,pcpu:6,pmem:6,pri:5,vsz:11,rss:11,ni:5,etime:30,state:5,tty:15,user:20,command; unset LC_ALL";
+            cmd = `export LC_ALL=C; ps -axo pid:11,ppid:11,pcpu:6,pmem:6,pri:5,vsz:11,rss:11,ni:5,etime:30,state:5,tty:15,user:20,command | grep ' ${processID} '; unset LC_ALL`;
           }
           if (_freebsd || _openbsd || _netbsd) {
-            cmd =
-              "export LC_ALL=C; ps -axo pid,ppid,pcpu,pmem,pri,vsz,rss,ni,etime,state,tty,user,command; unset LC_ALL";
+            cmd = `export LC_ALL=C; ps -axo pid,ppid,pcpu,pmem,pri,vsz,rss,ni,etime,state,tty,user,command | grep ' ${processID} '; unset LC_ALL`;
           }
           if (_darwin) {
-            cmd =
-              "ps -axo pid,ppid,pcpu,pmem,pri,vsz=temp_title_1,rss=temp_title_2,nice,etime=temp_title_3,state,tty,user,command -r";
+            cmd = `ps -axo pid,ppid,pcpu,pmem,pri,vsz=temp_title_1,rss=temp_title_2,nice,etime=temp_title_3,state,tty,user,command -r | grep ' ${processID} '`;
           }
           if (_sunos) {
-            cmd =
-              "ps -Ao pid,ppid,pcpu,pmem,pri,vsz,rss,nice,stime,s,tty,user,comm";
+            cmd = `ps -Ao pid,ppid,pcpu,pmem,pri,vsz,rss,nice,stime,s,tty,user,comm | grep ' ${processID} '`;
           }
           exec(cmd, { maxBuffer: 1024 * 20000 }, function (error, stdout) {
             if (!error && stdout.toString().trim()) {
               result.list = parseProcesses(
-                stdout.toString().split("\n")
+                stdout?.toString()?.trim()?.split("\n")
               ).slice();
+
               result.all = result.list.length;
-              result.running = result.list.filter(function (e) {
-                return e.state === "running";
-              }).length;
-              result.blocked = result.list.filter(function (e) {
-                return e.state === "blocked";
-              }).length;
-              result.sleeping = result.list.filter(function (e) {
-                return e.state === "sleeping";
-              }).length;
 
               if (_linux) {
                 // calc process_cpu - ps is not accurate in linux!
@@ -1082,7 +1072,7 @@ function processes(callback) {
           try {
             util
               .powerShell(
-                'Get-CimInstance Win32_Process | select-Object ProcessId,ParentProcessId,ExecutionState,Caption,CommandLine,ExecutablePath,UserModeTime,KernelModeTime,WorkingSetSize,Priority,PageFileUsage, @{n="CreationDate";e={$_.CreationDate.ToString("yyyy-MM-dd HH:mm:ss")}} | fl'
+                `Get-CimInstance Win32_Process | Where-Object { $_.ParentProcessId -eq ${processID} } | select-Object ProcessId,ParentProcessId,ExecutionState,Caption,CommandLine,ExecutablePath,UserModeTime,KernelModeTime,WorkingSetSize,Priority,PageFileUsage, @{n="CreationDate";e={$_.CreationDate.ToString("yyyy-MM-dd HH:mm:ss")}} | fl`
               )
               .then((stdout, error) => {
                 if (!error) {
