@@ -30,8 +30,8 @@ Add Below Code into your Root file Like App.js or Index.js
 ## Example Code
 
 ```javascript
-const monitoring = require("wooffer");
-monitoring(process.env.token, process.env.serviceToken);
+const wooffer = require("wooffer");
+wooffer(process.env.token, process.env.serviceToken);
 ```
 
 Add Below Code into your .env File
@@ -80,5 +80,27 @@ const wooffer = require("wooffer");
 wooffer.fail("EventName: Login \nUsername:Jhon Due");
 ```
 
+
+## Create third party API Call
+
+Integrating Wooffer for third-party API calls is straightforward. Just use wooffer.axios instead of axios. Here's a simple example.
+
+```javascript
+const wooffer = require("wooffer");
+
+const config = {
+  method: "post",
+  maxBodyLength: Infinity,
+  url: "https://countriesnow.space/api/v0.1/countries/population/cities",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  data: {
+    city: "lagos",
+  },
+};
+
+const response = await wooffer.axios.request(config);
+```
 
 
