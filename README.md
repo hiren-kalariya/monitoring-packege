@@ -6,10 +6,11 @@
 
 ## Table of contents
 
-- [Installation](#Installation)
-- [How to use Form](#How-to-use-Form)
-- [Create custom log](#Create-custom-log)
-- [Monitor Real-time request analytics](#Monitor-Real-time-request-analytics)
+- [Installation](#installation)
+- [How to use Wooffer](#how-to-use-wooffer) 
+- [Monitor Real-time request analytics](#monitor-real-time-request-analytics)
+- [Create custom log](#create-custom-log)
+- [How to use third-party APIs](#create-third-party-api-call)
 
 ## Installation
 
