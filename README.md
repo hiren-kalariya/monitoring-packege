@@ -10,7 +10,7 @@
 - [How to use Wooffer](#how-to-use-wooffer) 
 - [Monitor Real-time request analytics](#monitor-real-time-request-analytics)
 - [Create custom log](#create-custom-log)
-- [How to use third-party APIs](#create-third-party-api-call)
+- [How to track third-party APIs](#create-third-party-api-call)
 
 ## Installation
 
@@ -51,6 +51,8 @@ serviceToken = "<Your Service Token>";
 To monitor real-time request usage, add the code into the root files such as app.js or index.js. Just below, create the 'app' variable and make the necessary modifications.
 
 ```javascript
+const express = require("express");
+const app = express();
 app.use(wooffer.requestMonitoring);
 ```
 
@@ -104,4 +106,15 @@ const config = {
 const response = await wooffer.axios.request(config);
 ```
 
+OR
+
+```javascript
+const wooffer = require("wooffer");
+const response = await wooffer.axios.post(
+  `https://countriesnow.space/api/v0.1/countries/population/cities`,
+  {
+    city: "lagos",
+  }
+);
+```
 
