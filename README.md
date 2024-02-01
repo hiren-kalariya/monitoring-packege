@@ -106,10 +106,11 @@ const config = {
 const response = await wooffer.axios.request(config);
 ```
 
-OR
+Or
 
 ```javascript
 const wooffer = require("wooffer");
+
 const response = await wooffer.axios.post(
   `https://countriesnow.space/api/v0.1/countries/population/cities`,
   {
