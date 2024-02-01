@@ -106,7 +106,7 @@ const config = {
 const response = await wooffer.axios.request(config);
 ```
 
-Or
+or
 
 ```javascript
 const wooffer = require("wooffer");
