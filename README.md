@@ -6,10 +6,11 @@
 
 ## Table of contents
 
-- [Installation](#Installation)
-- [How to use Form](#How-to-use-Form)
-- [Create custom log](#Create-custom-log)
-- [Monitor Real-time request analytics](#Monitor-Real-time-request-analytics)
+- [Installation](#installation)
+- [How to use Wooffer](#how-to-use-wooffer) 
+- [Monitor Real-time request analytics](#monitor-real-time-request-analytics)
+- [Create custom log](#create-custom-log)
+- [How to track third-party APIs](#create-third-party-api-call)
 
 ## Installation
 
@@ -30,8 +31,8 @@ Add Below Code into your Root file Like App.js or Index.js
 ## Example Code
 
 ```javascript
-const monitoring = require("wooffer");
-monitoring(process.env.token, process.env.serviceToken);
+const wooffer = require("wooffer");
+wooffer(process.env.token, process.env.serviceToken);
 ```
 
 Add Below Code into your .env File
@@ -50,6 +51,8 @@ serviceToken = "<Your Service Token>";
 To monitor real-time request usage, add the code into the root files such as app.js or index.js. Just below, create the 'app' variable and make the necessary modifications.
 
 ```javascript
+const express = require("express");
+const app = express();
 app.use(wooffer.requestMonitoring);
 ```
 
@@ -81,4 +84,38 @@ wooffer.fail("EventName: Login \nUsername:Jhon Due");
 ```
 
 
+## Create third party API Call
+
+Integrating Wooffer for third-party API calls is straightforward. Just use wooffer.axios instead of axios. Here's a simple example.
+
+```javascript
+const wooffer = require("wooffer");
+
+const config = {
+  method: "post",
+  maxBodyLength: Infinity,
+  url: "https://countriesnow.space/api/v0.1/countries/population/cities",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  data: {
+    city: "lagos",
+  },
+};
+
+const response = await wooffer.axios.request(config);
+```
+
+or
+
+```javascript
+const wooffer = require("wooffer");
+
+const response = await wooffer.axios.post(
+  `https://countriesnow.space/api/v0.1/countries/population/cities`,
+  {
+    city: "lagos",
+  }
+);
+```
 
