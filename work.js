@@ -8,7 +8,7 @@ const {
   getFrequency,
 } = require("./functions");
 const { processes } = require("./proccess");
-const { performance } = require("perf_hooks");
+
 let i = true; // first time socket connect`
 let isSendData = false; // first time socket connect`
 let IntervalID = {};
@@ -96,7 +96,7 @@ function init(token, serviceToken) {
   const startMonitoring = () => {
     const intervalIndex = setInterval(async () => {
       let usageData = {};
-      const startTime = performance.now();
+
       const CPU_DATA = await getCPUInformation();
       const memoryUsage = await getMemoryInformation();
       const data = await processes(process.ppid);
@@ -130,8 +130,6 @@ function init(token, serviceToken) {
           usageData,
         });
       }
-      const endTime = performance.now();
-      const timeDifference = endTime - startTime;
     }, 2500);
 
     const usageIntervalIndex = setInterval(async () => {
