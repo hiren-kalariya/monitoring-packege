@@ -2,13 +2,13 @@ const { io } = require("socket.io-client");
 const os = require("os");
 const cluster = require("cluster");
 const axios = require("axios");
-const { performance } = require("perf_hooks");
 const {
   getCPUInformation,
   getMemoryInformation,
   getFrequency,
 } = require("./functions");
 const { processes } = require("./proccess");
+
 let i = true; // first time socket connect`
 let isSendData = false; // first time socket connect`
 let IntervalID = {};
@@ -24,7 +24,7 @@ let maxProcessMemoryUsage = 0;
 
 let disConnectTime = new Date().toUTCString();
 
-const socket = io("https://realtime-apis.wooffer.io");
+const socket = io("https://staging-socket.wooffer.io");
 
 const RecordData = (usageData = {}) => {
   if (
@@ -96,10 +96,11 @@ function init(token, serviceToken) {
   const startMonitoring = () => {
     const intervalIndex = setInterval(async () => {
       let usageData = {};
-      const startTime = performance.now();
+
       const CPU_DATA = await getCPUInformation();
       const memoryUsage = await getMemoryInformation();
-      const data = await processes();
+      const data = await processes(process.ppid);
+
       const runningProcess = data.list.filter(
         (el) => el.parentPid == process.ppid
       );
@@ -112,9 +113,13 @@ function init(token, serviceToken) {
       };
       usageData["Memory"] = { ...memoryUsage };
       usageData["Process"] = { [process.pid]: runningProcess };
-      RecordData(usageData);
-      const endTime = performance.now();
-      const timeDifference = endTime - startTime;
+
+      if (
+        usageData.Process?.[process.pid]?.[0]?.cpu ||
+        usageData.Process?.[process.pid]?.[0]?.cpuu ||
+        usageData.Process?.[process.pid]?.[0]?.cpus
+      )
+        RecordData(usageData);
 
       if (isSendData) {
         socket.emit("usageData", {
