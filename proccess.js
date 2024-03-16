@@ -629,7 +629,7 @@ function processes(processID, callback) {
           try {
             util
               .powerShell(
-                `Get-CimInstance Win32_Process | Where-Object { $_.ParentProcessId -eq ${processID} } | select-Object ProcessId,ParentProcessId,ExecutionState,Caption,CommandLine,ExecutablePath,UserModeTime,KernelModeTime,WorkingSetSize,Priority,PageFileUsage, @{n="CreationDate";e={$_.CreationDate.ToString("yyyy-MM-dd HH:mm:ss")}} | fl`
+                `Get-CimInstance Win32_Process | select-Object ProcessId,ParentProcessId,ExecutionState,Caption,CommandLine,ExecutablePath,UserModeTime,KernelModeTime,WorkingSetSize,Priority,PageFileUsage, @{n="CreationDate";e={$_.CreationDate.ToString("yyyy-MM-dd HH:mm:ss")}} | fl`
               )
               .then((stdout, error) => {
                 if (!error) {
