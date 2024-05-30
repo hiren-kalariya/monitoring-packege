@@ -1,4 +1,4 @@
-const {io} = require("socket.io-client");
+const { io } = require("socket.io-client");
 const os = require("os");
 const cluster = require("cluster");
 const axios = require("axios");
@@ -7,7 +7,7 @@ const {
   getMemoryInformation,
   getFrequency,
 } = require("./functions");
-const {processes} = require("./proccess");
+const { processes } = require("./proccess");
 
 let i = true; // first time socket connect`
 let isSendData = false; // first time socket connect`
@@ -111,8 +111,8 @@ function init(token, serviceToken) {
         hardware: `${os.cpus()[0].model} (${os.arch()})`,
         core: os.cpus()?.length,
       };
-      usageData["Memory"] = {...memoryUsage};
-      usageData["Process"] = {[process.pid]: runningProcess};
+      usageData["Memory"] = { ...memoryUsage };
+      usageData["Process"] = { [process.pid]: runningProcess };
 
       if (
         usageData.Process?.[process.pid]?.[0]?.cpu ||
@@ -188,11 +188,27 @@ function init(token, serviceToken) {
     startMonitoring();
     if (i) {
       i = false;
+      const kubernetesEnvVars = ["KUBERNETES_SERVICE_HOST", "KUBERNETES_PORT"];
+      const isKubernetes = kubernetesEnvVars.every(
+        (envVar) => process.env[envVar]
+      );
+
+      //TODO: Remove this Log
+
+      console.log(
+        isKubernetes,
+        process?.env?.KUBERNETES_SERVICE_HOST,
+        process?.env?.KUBERNETES_PORT
+      );
+
       socket.emit("join-room", {
         token,
         serviceToken,
         pid: process.pid,
         ppid: process.ppid,
+        isKubernetes: isKubernetes,
+        KUBERNETES_SERVICE_HOST: process?.env?.KUBERNETES_SERVICE_HOST,
+        KUBERNETES_PORT: process?.env?.KUBERNETES_PORT,
         cluster: {
           isWorker: cluster.isWorker,
           isMaster: cluster.isMaster,
@@ -285,7 +301,7 @@ const requestMonitoring = (req, res, next) => {
 axios.interceptors.request.use(
   (config) => {
     const startTime = new Date();
-    config.metadata = {startTime: new Date()};
+    config.metadata = { startTime: new Date() };
     socket.emit("requestStart", {
       method: config.method,
       type: "ThirdParty",
