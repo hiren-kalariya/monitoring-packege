@@ -204,8 +204,8 @@ function init(token, serviceToken) {
       pid: process.pid,
       ppid: process.ppid,
       isKubernetes: isKubernetes,
-      KUBERNETES_SERVICE_HOST: process?.env?.KUBERNETES_SERVICE_HOST,
-      KUBERNETES_PORT: process?.env?.KUBERNETES_PORT,
+      host: process?.env?.KUBERNETES_SERVICE_HOST,
+      port: process?.env?.KUBERNETES_PORT,
       cluster: {
         isWorker: cluster.isWorker,
         isMaster: cluster.isMaster,
