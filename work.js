@@ -9,7 +9,6 @@ const {
 } = require("./functions");
 const { processes } = require("./proccess");
 
-let i = true; // first time socket connect`
 let isSendData = false; // first time socket connect`
 let IntervalID = {};
 
@@ -186,47 +185,32 @@ function init(token, serviceToken) {
 
   const joinRoomEvent = () => {
     startMonitoring();
-    if (i) {
-      i = false;
-      const kubernetesEnvVars = ["KUBERNETES_SERVICE_HOST", "KUBERNETES_PORT"];
-      const isKubernetes = kubernetesEnvVars.every(
-        (envVar) => process.env[envVar]
-      );
+    const kubernetesEnvVars = ["KUBERNETES_SERVICE_HOST", "KUBERNETES_PORT"];
+    const isKubernetes = kubernetesEnvVars.every(
+      (envVar) => process.env[envVar]
+    );
 
-      //TODO: Remove this Log
+    //TODO: Remove this Log
 
-      console.log(
-        isKubernetes,
-        process?.env?.KUBERNETES_SERVICE_HOST,
-        process?.env?.KUBERNETES_PORT
-      );
+    console.log(
+      isKubernetes,
+      process?.env?.KUBERNETES_SERVICE_HOST,
+      process?.env?.KUBERNETES_PORT
+    );
 
-      socket.emit("join-room", {
-        token,
-        serviceToken,
-        pid: process.pid,
-        ppid: process.ppid,
-        isKubernetes: isKubernetes,
-        KUBERNETES_SERVICE_HOST: process?.env?.KUBERNETES_SERVICE_HOST,
-        KUBERNETES_PORT: process?.env?.KUBERNETES_PORT,
-        cluster: {
-          isWorker: cluster.isWorker,
-          isMaster: cluster.isMaster,
-        },
-      });
-    } else {
-      socket.emit("re-join-room", {
-        token,
-        serviceToken,
-        pid: process.pid,
-        ppid: process.ppid,
-        disConnectTime,
-        cluster: {
-          isWorker: cluster.isWorker,
-          isMaster: cluster.isMaster,
-        },
-      });
-    }
+    socket.emit("join-room", {
+      token,
+      serviceToken,
+      pid: process.pid,
+      ppid: process.ppid,
+      isKubernetes: isKubernetes,
+      KUBERNETES_SERVICE_HOST: process?.env?.KUBERNETES_SERVICE_HOST,
+      KUBERNETES_PORT: process?.env?.KUBERNETES_PORT,
+      cluster: {
+        isWorker: cluster.isWorker,
+        isMaster: cluster.isMaster,
+      },
+    });
   };
 
   socket.on("connect", joinRoomEvent); // Join the room when connected initially
