@@ -211,7 +211,7 @@ function init(token, serviceToken) {
       } = details;
       serviceEnvironmentConfiguration = {
         isAPIEnabled,
-        isServerActivityLogEnabled, // TODO: need to check
+        isServerActivityLogEnabled,
         isCustomLogEnabled,
         isCrashLogEnabled,
         isProcessAndCPUUsageEnabled,
