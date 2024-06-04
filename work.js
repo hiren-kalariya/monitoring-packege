@@ -1,4 +1,4 @@
-const { io } = require("socket.io-client");
+const {io} = require("socket.io-client");
 const os = require("os");
 const cluster = require("cluster");
 const axios = require("axios");
@@ -7,7 +7,7 @@ const {
   getMemoryInformation,
   getFrequency,
 } = require("./functions");
-const { processes } = require("./proccess");
+const {processes} = require("./proccess");
 
 let isSendData = false; // first time socket connect`
 let IntervalID = {};
@@ -24,6 +24,8 @@ let maxProcessMemoryUsage = 0;
 let disConnectTime = new Date().toUTCString();
 
 const socket = io("https://dev-socket.wooffer.io/");
+
+let serviceEnvironmentConfiguration = {};
 
 const RecordData = (usageData = {}) => {
   if (
@@ -86,6 +88,14 @@ const RecordData = (usageData = {}) => {
   }
 };
 
+const isConfigEnabled = (configKey) => {
+  return (
+    serviceEnvironmentConfiguration &&
+    serviceEnvironmentConfiguration.hasOwnProperty(configKey) &&
+    serviceEnvironmentConfiguration[configKey]
+  );
+};
+
 function init(token, serviceToken) {
   const stopMonitoring = () => {
     clearInterval(IntervalID?.id);
@@ -110,8 +120,8 @@ function init(token, serviceToken) {
         hardware: `${os.cpus()[0].model} (${os.arch()})`,
         core: os.cpus()?.length,
       };
-      usageData["Memory"] = { ...memoryUsage };
-      usageData["Process"] = { [process.pid]: runningProcess };
+      usageData["Memory"] = {...memoryUsage};
+      usageData["Process"] = {[process.pid]: runningProcess};
 
       if (
         usageData.Process?.[process.pid]?.[0]?.cpu ||
@@ -132,17 +142,19 @@ function init(token, serviceToken) {
     }, 2500);
 
     const usageIntervalIndex = setInterval(async () => {
-      socket.emit("updateUsage", {
-        token,
-        serviceToken,
-        maxCPUUsageUser,
-        maxCPUUsageSystem,
-        maxMemoryUsage,
-        maxSwapMemoryUsage,
-        totalMemory,
-        maxProcessCPUUsage,
-        maxProcessMemoryUsage,
-      });
+      if (isConfigEnabled("isProcessAndCPUUsageEnabled")) {
+        socket.emit("updateUsage", {
+          token,
+          serviceToken,
+          maxCPUUsageUser,
+          maxCPUUsageSystem,
+          maxMemoryUsage,
+          maxSwapMemoryUsage,
+          totalMemory,
+          maxProcessCPUUsage,
+          maxProcessMemoryUsage,
+        });
+      }
       maxCPUUsageUser = 0;
       maxCPUUsageSystem = 0;
       maxMemoryUsage = 0;
@@ -150,7 +162,7 @@ function init(token, serviceToken) {
       maxProcessCPUUsage = 0;
       maxProcessMemoryUsage = 0;
       totalMemory = 0;
-    }, 10 * 60 * 1000);
+    }, (+serviceEnvironmentConfiguration?.cpuUsageInterval || 10) * 60 * 1000);
 
     IntervalID = {
       id: intervalIndex,
@@ -159,43 +171,58 @@ function init(token, serviceToken) {
   };
   process.on("unhandledRejection", (reason, p) => {
     console.error(reason, "Unhandled Rejection at Promise", p);
-    socket.emit(
-      "error",
-      "Name : " +
-        reason?.name +
-        "\nMessage : " +
-        reason?.message +
-        "\nstack : " +
-        reason?.stack
-    );
+    if (isConfigEnabled("isCrashLogEnabled")) {
+      socket.emit(
+        "error",
+        "Name : " +
+          reason?.name +
+          "\nMessage : " +
+          reason?.message +
+          "\nstack : " +
+          reason?.stack
+      );
+    }
   });
 
   process.on("uncaughtException", (err) => {
     console.log(err);
-    socket.emit(
-      "error",
-      "Name : " +
-        err.name +
-        "\nMessage : " +
-        err.message +
-        "\nstack : " +
-        err.stack
-    );
+    if (isConfigEnabled("isCrashLogEnabled")) {
+      socket.emit(
+        "error",
+        "Name : " +
+          err.name +
+          "\nMessage : " +
+          err.message +
+          "\nstack : " +
+          err.stack
+      );
+    }
   });
 
   const joinRoomEvent = () => {
+    socket.on("updateServiceEnvironmentInformationForPackage", (details) => {
+      const {
+        isAPIEnabled = true,
+        isServerActivityLogEnabled = true,
+        isProcessAndCPUUsageEnabled = true,
+        cpuUsageInterval = 10,
+        isCustomLogEnabled = true,
+        isCrashLogEnabled = true,
+      } = details;
+      serviceEnvironmentConfiguration = {
+        isAPIEnabled,
+        isServerActivityLogEnabled, // TODO: need to check
+        isCustomLogEnabled,
+        isCrashLogEnabled,
+        isProcessAndCPUUsageEnabled,
+        cpuUsageInterval,
+      };
+    });
+
     startMonitoring();
     const kubernetesEnvVars = ["KUBERNETES_SERVICE_HOST", "KUBERNETES_PORT"];
     const isKubernetes = kubernetesEnvVars.every(
       (envVar) => process.env[envVar]
-    );
-
-    //TODO: Remove this Log
-
-    console.log(
-      isKubernetes,
-      process?.env?.KUBERNETES_SERVICE_HOST,
-      process?.env?.KUBERNETES_PORT
     );
 
     socket.emit("join-room", {
@@ -234,116 +261,124 @@ function init(token, serviceToken) {
 }
 
 const alert = (message = " ") => {
-  socket.emit("alert", {
-    type: "alert",
-    message,
-  });
+  if (isConfigEnabled("isCustomLogEnabled")) {
+    socket.emit("alert", {
+      type: "alert",
+      message,
+    });
+  }
 };
 const success = (message = " ") => {
-  socket.emit("alert", {
-    type: "success",
-    message,
-  });
+  if (isConfigEnabled("isCustomLogEnabled")) {
+    socket.emit("alert", {
+      type: "success",
+      message,
+    });
+  }
 };
 
 const fail = (message = " ") => {
-  socket.emit("alert", {
-    type: "fail",
-    message,
-  });
+  if (isConfigEnabled("isCustomLogEnabled")) {
+    socket.emit("alert", {
+      type: "fail",
+      message,
+    });
+  }
 };
 
 const requestMonitoring = (req, res, next) => {
-  const requestReceivedTime = new Date();
-  socket.emit("requestStart", {
-    method: req.method,
-    originalUrl: req.originalUrl,
-    requestReceivedTime: requestReceivedTime.toUTCString(),
-  });
-
-  // Continue to the next middleware or route handler
-  res.on("finish", () => {
-    const responseSentTime = new Date();
-    const timeDifference = responseSentTime - requestReceivedTime;
-
-    // Check the response status
-    const responseStatus = res.statusCode;
-
-    socket.emit("responseSent", {
+  if (isConfigEnabled("isAPIEnabled")) {
+    const requestReceivedTime = new Date();
+    socket.emit("requestStart", {
       method: req.method,
       originalUrl: req.originalUrl,
       requestReceivedTime: requestReceivedTime.toUTCString(),
-      timeDifference,
-      responseStatus,
     });
-  });
 
+    // Continue to the next middleware or route handler
+    res.on("finish", () => {
+      const responseSentTime = new Date();
+      const timeDifference = responseSentTime - requestReceivedTime;
+
+      // Check the response status
+      const responseStatus = res.statusCode;
+
+      socket.emit("responseSent", {
+        method: req.method,
+        originalUrl: req.originalUrl,
+        requestReceivedTime: requestReceivedTime.toUTCString(),
+        timeDifference,
+        responseStatus,
+      });
+    });
+  }
   next();
 };
 
-// Add a request interceptor
-axios.interceptors.request.use(
-  (config) => {
-    const startTime = new Date();
-    config.metadata = { startTime: new Date() };
-    socket.emit("requestStart", {
-      method: config.method,
-      type: "ThirdParty",
-      originalUrl: config.url,
-      requestReceivedTime: startTime.toUTCString(),
-    });
-    return config;
-  },
-  (error) => {
-    const endTime = new Date();
-    const timeDifference = endTime - error.config.metadata.startTime;
-    socket.emit("responseSent", {
-      method: error.config.method,
-      originalUrl: error.config.url,
-      requestReceivedTime: error.config.metadata.startTime,
-      timeDifference,
-      responseStatus: error.response ? error.response.status : "No response",
-      errorMessage: error.message,
-      type: "ThirdParty",
-    });
+if (isConfigEnabled("isAPIEnabled")) {
+  // Add a request interceptor
+  axios.interceptors.request.use(
+    (config) => {
+      const startTime = new Date();
+      config.metadata = {startTime: new Date()};
+      socket.emit("requestStart", {
+        method: config.method,
+        type: "ThirdParty",
+        originalUrl: config.url,
+        requestReceivedTime: startTime.toUTCString(),
+      });
+      return config;
+    },
+    (error) => {
+      const endTime = new Date();
+      const timeDifference = endTime - error.config.metadata.startTime;
+      socket.emit("responseSent", {
+        method: error.config.method,
+        originalUrl: error.config.url,
+        requestReceivedTime: error.config.metadata.startTime,
+        timeDifference,
+        responseStatus: error.response ? error.response.status : "No response",
+        errorMessage: error.message,
+        type: "ThirdParty",
+      });
 
-    return Promise.reject(error);
-  }
-);
+      return Promise.reject(error);
+    }
+  );
 
-// Add a response interceptor
-axios.interceptors.response.use(
-  (response) => {
-    const endTime = new Date();
-    const timeDifference = endTime - response.config.metadata.startTime;
+  // Add a response interceptor
+  axios.interceptors.response.use(
+    (response) => {
+      const endTime = new Date();
+      const timeDifference = endTime - response.config.metadata.startTime;
 
-    socket.emit("responseSent", {
-      method: response.config.method,
-      originalUrl: response.config.url,
-      requestReceivedTime: response.config.metadata.startTime,
-      timeDifference,
-      type: "ThirdParty",
-      responseStatus: response.status,
-    });
+      socket.emit("responseSent", {
+        method: response.config.method,
+        originalUrl: response.config.url,
+        requestReceivedTime: response.config.metadata.startTime,
+        timeDifference,
+        type: "ThirdParty",
+        responseStatus: response.status,
+      });
 
-    return response;
-  },
-  (error) => {
-    const endTime = new Date();
-    const timeDifference = endTime - error.config.metadata.startTime;
-    socket.emit("responseSent", {
-      method: error.config.method,
-      originalUrl: error.config.url,
-      requestReceivedTime: error.config.metadata.startTime,
-      timeDifference,
-      type: "ThirdParty",
-      responseStatus: error.response ? error.response.status : "No response",
-      errorMessage: error.message,
-    });
-    return Promise.reject(error);
-  }
-);
-
+      return response;
+    },
+    (error) => {
+      const endTime = new Date();
+      const timeDifference = endTime - error.config.metadata.startTime;
+      socket.emit("responseSent", {
+        method: error.config.method,
+        originalUrl: error.config.url,
+        requestReceivedTime: error.config.metadata.startTime,
+        timeDifference,
+        type: "ThirdParty",
+        responseStatus: error.response ? error.response.status : "No response",
+        errorMessage: error.message,
+      });
+      return Promise.reject(error);
+    }
+  );
+}
 module.exports = {
   init,
   alert,
