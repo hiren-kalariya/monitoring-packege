@@ -171,7 +171,7 @@ function init(token, serviceToken) {
   };
   process.on("unhandledRejection", (reason, p) => {
     console.error(reason, "Unhandled Rejection at Promise", p);
-    if (isConfigEnabled("isCrashLogEnabled")) {
+    if (isConfigEnabled("isServerActivityLogEnabled")) {
       socket.emit(
         "error",
         "Name : " +
@@ -186,7 +186,7 @@ function init(token, serviceToken) {
 
   process.on("uncaughtException", (err) => {
     console.log(err);
-    if (isConfigEnabled("isCrashLogEnabled")) {
+    if (isConfigEnabled("isServerActivityLogEnabled")) {
       socket.emit(
         "error",
         "Name : " +
@@ -207,13 +207,11 @@ function init(token, serviceToken) {
         isProcessAndCPUUsageEnabled = true,
         cpuUsageInterval = 10,
         isCustomLogEnabled = true,
-        isCrashLogEnabled = true,
       } = details;
       serviceEnvironmentConfiguration = {
         isAPIEnabled,
         isServerActivityLogEnabled,
         isCustomLogEnabled,
-        isCrashLogEnabled,
         isProcessAndCPUUsageEnabled,
         cpuUsageInterval,
       };
@@ -315,23 +313,25 @@ const requestMonitoring = (req, res, next) => {
   next();
 };
 
-if (isConfigEnabled("isAPIEnabled")) {
-  // Add a request interceptor
-  axios.interceptors.request.use(
-    (config) => {
-      const startTime = new Date();
-      config.metadata = {startTime: new Date()};
+// Add a request interceptor
+axios.interceptors.request.use(
+  (config) => {
+    const startTime = new Date();
+    config.metadata = {startTime: new Date()};
+    if (isConfigEnabled("isAPIEnabled")) {
       socket.emit("requestStart", {
         method: config.method,
         type: "ThirdParty",
         originalUrl: config.url,
         requestReceivedTime: startTime.toUTCString(),
       });
-      return config;
-    },
-    (error) => {
-      const endTime = new Date();
-      const timeDifference = endTime - error.config.metadata.startTime;
+    }
+    return config;
+  },
+  (error) => {
+    const endTime = new Date();
+    const timeDifference = endTime - error.config.metadata.startTime;
+    if (isConfigEnabled("isAPIEnabled")) {
       socket.emit("responseSent", {
         method: error.config.method,
         originalUrl: error.config.url,
@@ -341,17 +341,17 @@ if (isConfigEnabled("isAPIEnabled")) {
         errorMessage: error.message,
         type: "ThirdParty",
       });
-
-      return Promise.reject(error);
     }
-  );
+    return Promise.reject(error);
+  }
+);
 
-  // Add a response interceptor
-  axios.interceptors.response.use(
-    (response) => {
-      const endTime = new Date();
-      const timeDifference = endTime - response.config.metadata.startTime;
-
+// Add a response interceptor
+axios.interceptors.response.use(
+  (response) => {
+    const endTime = new Date();
+    const timeDifference = endTime - response.config.metadata.startTime;
+    if (isConfigEnabled("isAPIEnabled")) {
       socket.emit("responseSent", {
         method: response.config.method,
         originalUrl: response.config.url,
@@ -360,12 +360,14 @@ if (isConfigEnabled("isAPIEnabled")) {
         type: "ThirdParty",
         responseStatus: response.status,
       });
+    }
 
-      return response;
-    },
-    (error) => {
-      const endTime = new Date();
-      const timeDifference = endTime - error.config.metadata.startTime;
+    return response;
+  },
+  (error) => {
+    const endTime = new Date();
+    const timeDifference = endTime - error.config.metadata.startTime;
+    if (isConfigEnabled("isAPIEnabled")) {
       socket.emit("responseSent", {
         method: error.config.method,
         originalUrl: error.config.url,
@@ -375,10 +377,11 @@ if (isConfigEnabled("isAPIEnabled")) {
         responseStatus: error.response ? error.response.status : "No response",
         errorMessage: error.message,
       });
-      return Promise.reject(error);
     }
-  );
-}
+    return Promise.reject(error);
+  }
+);
+
 module.exports = {
   init,
   alert,
