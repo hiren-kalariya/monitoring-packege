@@ -1,4 +1,4 @@
-const {io} = require("socket.io-client");
+const { io } = require("socket.io-client");
 const os = require("os");
 const cluster = require("cluster");
 const axios = require("axios");
@@ -7,7 +7,7 @@ const {
   getMemoryInformation,
   getFrequency,
 } = require("./functions");
-const {processes} = require("./proccess");
+const { processes } = require("./proccess");
 
 let isSendData = false; // first time socket connect`
 let IntervalID = {};
@@ -120,8 +120,8 @@ function init(token, serviceToken) {
         hardware: `${os.cpus()[0].model} (${os.arch()})`,
         core: os.cpus()?.length,
       };
-      usageData["Memory"] = {...memoryUsage};
-      usageData["Process"] = {[process.pid]: runningProcess};
+      usageData["Memory"] = { ...memoryUsage };
+      usageData["Process"] = { [process.pid]: runningProcess };
 
       if (
         usageData.Process?.[process.pid]?.[0]?.cpu ||
@@ -172,30 +172,38 @@ function init(token, serviceToken) {
   process.on("unhandledRejection", (reason, p) => {
     console.error(reason, "Unhandled Rejection at Promise", p);
     if (isConfigEnabled("isServerActivityLogEnabled")) {
-      socket.emit(
-        "error",
-        "Name : " +
-          reason?.name +
-          "\nMessage : " +
-          reason?.message +
-          "\nstack : " +
-          reason?.stack
-      );
+      if (reason?.name !== null && reason?.name !== undefined) {
+        socket.emit(
+          "error",
+          "Name : " +
+            reason?.name +
+            "\nMessage : " +
+            reason?.message +
+            "\nstack : " +
+            reason?.stack
+        );
+      } else {
+        socket.emit("error", "Error : " + reason.toString());
+      }
     }
   });
 
   process.on("uncaughtException", (err) => {
     console.log(err);
     if (isConfigEnabled("isServerActivityLogEnabled")) {
-      socket.emit(
-        "error",
-        "Name : " +
-          err.name +
-          "\nMessage : " +
-          err.message +
-          "\nstack : " +
-          err.stack
-      );
+      if (err?.name !== null && err?.name !== undefined) {
+        socket.emit(
+          "error",
+          "Name : " +
+            err.name +
+            "\nMessage : " +
+            err.message +
+            "\nstack : " +
+            err.stack
+        );
+      } else {
+        socket.emit("error", "Error : " + err.toString());
+      }
     }
   });
 
@@ -317,7 +325,7 @@ const requestMonitoring = (req, res, next) => {
 axios.interceptors.request.use(
   (config) => {
     const startTime = new Date();
-    config.metadata = {startTime: new Date()};
+    config.metadata = { startTime: new Date() };
     if (isConfigEnabled("isAPIEnabled")) {
       socket.emit("requestStart", {
         method: config.method,
