@@ -172,30 +172,38 @@ function init(token, serviceToken) {
   process.on("unhandledRejection", (reason, p) => {
     console.error(reason, "Unhandled Rejection at Promise", p);
     if (isConfigEnabled("isServerActivityLogEnabled")) {
-      socket.emit(
-        "error",
-        "Name : " +
-          reason?.name +
-          "\nMessage : " +
-          reason?.message +
-          "\nstack : " +
-          reason?.stack
-      );
+      if (reason?.name !== null && reason?.name !== undefined) {
+        socket.emit(
+          "error",
+          "Name : " +
+            reason?.name +
+            "\nMessage : " +
+            reason?.message +
+            "\nstack : " +
+            reason?.stack
+        );
+      } else {
+        socket.emit("error", reason.toString());
+      }
     }
   });
 
   process.on("uncaughtException", (err) => {
     console.log(err);
     if (isConfigEnabled("isServerActivityLogEnabled")) {
-      socket.emit(
-        "error",
-        "Name : " +
-          err.name +
-          "\nMessage : " +
-          err.message +
-          "\nstack : " +
-          err.stack
-      );
+      if (err?.name !== null && err?.name !== undefined) {
+        socket.emit(
+          "error",
+          "Name : " +
+            err.name +
+            "\nMessage : " +
+            err.message +
+            "\nstack : " +
+            err.stack
+        );
+      } else {
+        socket.emit("error", err.toString());
+      }
     }
   });
 
